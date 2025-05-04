@@ -1,7 +1,9 @@
 package game2048;
+
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /** Tests the atLeastOneMoveExists() static method of Model.
  *

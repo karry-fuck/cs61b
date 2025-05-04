@@ -114,10 +114,96 @@ public class Model extends Observable {
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
 
+        if (side == Side.NORTH){
+            changed = tiltNorth();;
+        } else {
+            board.setViewingPerspective(side);
+            changed = tiltNorth();
+            board.setViewingPerspective(Side.NORTH);
+
+        }
+
         checkGameOver();
         if (changed) {
             setChanged();
         }
+        return changed;
+    }
+
+    /** Runs the logic of tilt
+     *  Move the tile towards the side of the tilt
+     */
+    private boolean tiltNorth() {
+        boolean changed = false;
+
+        boolean doesScore = false;
+
+        /** imagine we iterating from top of the row to the bottom.
+         when the column is null, you mark that tile so when there is a tile that isn't null
+         you move that tile to the null tile. Then, if you find not null again, check if the value is the same,
+         if the value is not the same, then move the tile to the latest found null tile. If the value is the same,
+         then merge them.
+         */
+        for(int c = 3; c >= 0; c--){
+            int colNull = 0;
+            int rowNull = 0;
+            boolean isNull = false;
+
+            int colNum = 3;
+            int rowNum = 3;
+            boolean isNum = false;
+
+            for(int r = 3; r >= 0; r--){
+                Tile t = board.tile(c, r);
+                if(t != null && isNum && board.tile(colNum, rowNum).value() == t.value()){ //
+                    doesScore = board.move(colNum, rowNum, t);
+                    if(doesScore){
+                        score += board.tile(colNum, rowNum).value();
+                    }
+                    isNum = false;
+                    changed = true;
+                    if(!isNull && rowNull < rowNum){
+                        isNull = true;
+                        colNull = c;
+                        rowNull = r;
+                    }
+
+                    continue;
+                }
+
+                if(isNull && t != null){
+                    doesScore = board.move(colNull, rowNull, t);
+                    if(doesScore){
+                        score += board.tile(colNull, rowNull).value();
+                    }
+                    changed = true;
+                    colNum = colNull;
+                    rowNum = rowNull;
+                    colNull = c; //mengassign kalo kolom ini null
+                    rowNull = r;
+
+                    isNum = true;
+                    continue;
+                }
+
+                if(t != null){
+                    colNum = c;
+                    rowNum = r;
+                    isNum = true;
+                }
+
+                if(t == null && r == 3){
+                    isNull = true;
+                    colNull = c;
+                    rowNull = r;
+                } else if(t == null && isNull == false ) { //&& r != 0
+                    isNull = true;
+                    colNull = c;
+                    rowNull = r;
+                }
+            }
+        }
+
         return changed;
     }
 
@@ -138,8 +224,13 @@ public class Model extends Observable {
      * */
     public static boolean emptySpaceExists(Board b) {
         // TODO: Fill in this function.
-        return false;
-    }
+            for (Tile t : b) {
+                if (t == null) { // 直接检查Tile对象是否为null
+                    return true;
+                }
+            }
+            return false;
+        }
 
     /**
      * Returns true if any tile is equal to the maximum valid value.
@@ -148,6 +239,12 @@ public class Model extends Observable {
      */
     public static boolean maxTileExists(Board b) {
         // TODO: Fill in this function.
+    for(Tile t:b){
+
+        if(t != null && t.value() == MAX_PIECE){
+            return  true;
+        }
+    }
         return false;
     }
 
@@ -159,12 +256,32 @@ public class Model extends Observable {
      */
     public static boolean atLeastOneMoveExists(Board b) {
         // TODO: Fill in this function.
+        if (emptySpaceExists(b) || adjacentTilesHaveSameValue(b)) {
+            return true;
+        }
+        return false;
+    }
+    public static boolean adjacentTilesHaveSameValue(Board b) {
+        //travel through the board and find if there is any adjacent tiles with the same value
+        for (int i = 0; i < b.size(); i++) {
+            for (int j = 0; j < b.size(); j++) {
+                if (b.tile(i, j) != null) {
+                    if (i + 1 < b.size() && b.tile(i + 1, j) != null
+                            && b.tile(i, j).value() == b.tile(i + 1, j).value()) {
+                        return true;
+                    }
+                    if (j + 1 < b.size() && b.tile(i, j + 1) != null
+                            && b.tile(i, j).value() == b.tile(i, j + 1).value()) {
+                        return true;
+                    }
+                }
+            }
+        }
         return false;
     }
 
-
     @Override
-     /** Returns the model as a string, used for debugging. */
+     /* Returns the model as a string, used for debugging.  */
     public String toString() {
         Formatter out = new Formatter();
         out.format("%n[%n");
